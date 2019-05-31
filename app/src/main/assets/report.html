@@ -1,0 +1,467 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>心身压力检测报告</title>
+    <link href="css/hrv_report.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" src="js/jquery-1.7.min.js"></script>
+    <script type="text/javascript" src="js/jquery.tmpl.min.js"></script>
+</head>
+<body>
+<div id="test"></div>
+<div class="print_all">
+
+</div><!--print_all-->
+<script type="text/json" id="report_tmpl">
+<div class="print_index">
+		<h1 class="print_title">自主神经心身平衡指数评估报告</h1>
+	<table border="0" cellpadding="0" cellspacing="0" width="100%">
+		<tbody>
+			<tr>
+				<td  style="text-align:center" width="150">编号</td>
+				<td  style="text-align:center" width="150">姓名</td>
+				<td  style="text-align:center" width="150">性别</td>
+				<td  style="text-align:center" width="150">年龄</td>
+			</tr>
+			<tr>
+				<td  style="text-align:center;color:#24669c">${user.barcode}</td>
+				<td  style="text-align:center;color:#24669c">${user.userName}</td>
+				<td  style="text-align:center;color:#24669c">{{if user.sex=='MALE'}}男{{else}}女{{/if}}</td>
+				<td  style="text-align:center;color:#24669c">${user.age}</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<div class="mental_title" style="margin:12px 0">
+			<span></span>
+			<h3>自主神经心神平衡指数指标分析</h3>
+		</div>
+	<div id="report_image_0" style="width:50%;height:280px;float:left"></div>
+	<div id="report_image_1" style="width:50%;height:280px;float:left;margin:20px 0"></div>
+	<div class="mental_stress">
+		<table border="0" cellpadding="0" cellspacing="0" width="100%" class="print_table">
+			<tbody>
+				{{each genes.data}}
+				{{if $value.score}}
+					<tr>
+						<td width="150">
+							<div class="pressure_icon">
+								<h4 style="font-size:18px;"> ${$value.title}</h4>
+							</div>
+						</td>
+						<td>
+							{{if $value.reportImage}}
+							<div class="grade_all">
+								<div class="grade_number_zero">
+								<span>{{if $value.title !== "体质状态"&& $value.title !== "ANS平衡状态"}}
+											${$value.reportImage.min}
+										{{/if}}
+						      </span>
+						    </div><!--grade_number_zero-->
+								<div class="grade_process_all" style="">
+						       <div class="grade_process">
+						         {{each $value.reportImage.process}}
+						            <div class="process_one" style="overflow:hidden;width:${$value.width}">
+							             <p>${$value.text}</p>
+							             <span style="width:auto;background-color: ${$value.color}"></span>
+							          </div><!--process_one-->
+						          {{/each}}
+						        <div class="clr"></div>
+						      </div><!--grade_process-->
+
+						      <div class="pointer_seat" style="left:${($value.reportImage.score) / ($value.reportImage.max) * 100}%">
+						        	<span class="seat_icon">
+										{{if $value.title !== "体质状态"}}
+											${$value.reportImage.score}
+										{{/if}}
+									</span>
+						      </div><!--pointer_seat-->
+						    </div><!--grade_process_all-->
+
+						    <div class="grade_number_hundred">
+						       <span>{{if $value.title !== "体质状态"&& $value.title !== "ANS平衡状态"}}
+											${$value.reportImage.max}
+										{{/if}}</span>
+						    </div><!--grade_number_hundred-->
+						   <div class="clr"></div>
+							</div><!--grade_all-->
+							{{/if}}
+						</td>
+					</tr>
+				{{/if}}
+				{{/each}}
+			</tbody>
+		</table>
+	</div><!--mental_stress-->
+
+	<div class="mental_stress">
+		<div class="mental_title">
+				<span></span>
+			<h3>检查结论及注意事项</h3>
+		</div>
+		<div class="check_results">
+			{{if genes.content }}
+				<p style="text-indent: 2em;">{{html genes.content.mo1}}</p>
+				<p style="text-indent: 2em;padding-bottom: 50px;padding-top: 30px;">{{html genes.content.mo2}}</p>
+
+			{{/if}}
+		</div>
+	</div><!--mental_stress-->
+</div><!--print_index-->
+</script>
+<script src="js/testing/Highcharts-3.0.1/highcharts.dev.js"></script>
+<script src="js/testing/Highcharts-3.0.1/highcharts-more.js"></script>
+<script src="js/testing/Highcharts-3.0.1/modules/exporting.js"></script>
+<script src="js/testing/js/image.js"></script>
+<script type="text/javascript">
+(function(){
+	var table={};
+	$.extend({
+		set: function(key, value){
+			table[key]=value;
+			return "";
+		},
+		get: function(key){
+			return table[key];
+		}
+	});
+
+})();
+
+function callback(json){
+    console.log(jsonObj);
+	var hrv = JSON.parse(json.HrvData);
+	var newGens = json.data.data;
+	//h_PRU  压力 h_PFT 疲劳 ANFS平衡状态
+	var h_ANFS = 0,h_PRU = 0,h_PFT = 0;
+	var fScore = {};
+	//级别，统计属于那个级别
+	var classes = 0;
+	var arrays = [];
+	//统计水平出现的次数
+	var counts = {};
+	var classTitle = ['焦虑状态','抑郁状态','睡眠状态','压力状态','疲劳状态','ANS平衡状态','体质状态'];
+var classer = {
+        class1:{
+            mo1 :"您的自主神经功能处于重度失调状态，建议您及时寻求专业医生的帮助，并通过冥想干预、经颅微电经络舒缓干预、心身平衡干预等综合方法调节自主神经功能。",
+        },
+        class2:{
+            mo1 :"您的自主神经功能处于中度失调状态，建议您通过冥想干预、经颅微电经络舒缓干预、心身平衡干预等综合方法调节自主神经功能",
+        },
+        class3:{
+            mo1 :"您的自主神经功能处于轻度失调状态，建议您通过冥想干预、经颅微电经络舒缓干预、心身平衡干预等综合方法调节自主神经功能。",
+        },
+        class4:{
+            mo1 :"您的自主神经功能处于正常状态，建议您保持现有生活方式。",
+        },
+    };
+	//融合hrv数据进量表数据
+	for(var i in hrv){
+		if(hrv[i].key == "h_ANFS"){
+			h_ANFS = hrv[i].score;
+		}
+		if(hrv[i].key == "h_PRU"){
+			h_PRU = hrv[i].score;
+		}
+		if(hrv[i].key == "h_PFT"){
+			h_PFT = hrv[i].score;
+		}
+	}
+
+	//三个级别 1水平1 2水平2 3水平3
+	for(var i=0;i<newGens.length;i++){
+		if(newGens[i].key == 'F1'){
+			newGens[i].reportImage = {"min":0,"max":21,"score":newGens[i].score,"process":[{"color":"#80cac1","text":"无","width":"24%"},{"color":"#e2ae5c","text":"轻","width":"24%"},{"color":"#e66f62","text":"中","width":"24%"},{"color":"#db453d","text":"重","width":"28%"}]};
+			if(newGens[i].score >= 0 && newGens[i].score <= 4){
+				fScore.F1 = {
+					glass:1,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score >= 5 && newGens[i].score <= 9){
+				fScore.F1 = {
+					glass:2,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score >= 10 && newGens[i].score <= 21){
+				fScore.F1 = {
+					glass:3,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}
+		}
+		if(newGens[i].key == 'F2'){
+			newGens[i].reportImage = {"min":0,"max":27,"score":newGens[i].score,"process":[{"color":"#80cac1","text":"无","width":"18.5%"},{"color":"#e2ae5c","text":"轻","width":"18.5%"},{"color":"#e66f62","text":"中","width":"18.5%"},{"color":"#db453d","text":"重","width":"44.5%"}]};
+			if(newGens[i].score >= 0 && newGens[i].score <= 4){
+				fScore.F2 = {
+					glass:1,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score >= 5 && newGens[i].score <= 9){
+				fScore.F2 = {
+					glass:2,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score >= 10 && newGens[i].score <= 27){
+				fScore.F2 = {
+					glass:3,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}
+		}
+		if(newGens[i].key == 'F3'){
+			newGens[i].reportImage = {"min":0,"max":12,"score":newGens[i].score,"process":[{"color":"#80cac1","text":"较好","width":"24%"},{"color":"#e2ae5c","text":"一般","width":"16%"},{"color":"#e66f62","text":"较差","width":"30%"},{"color":"#db453d","text":"很差","width":"30%"}]};
+			if(newGens[i].score >= 0 && newGens[i].score <= 2){
+				fScore.F3 = {
+					glass:1,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score >= 3 && newGens[i].score <= 4){
+				fScore.F3 = {
+					glass:2,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score >= 5 && newGens[i].score <= 12){
+				fScore.F3 = {
+					glass:3,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}
+		}
+		if(newGens[i].key == 'F4'){
+			newGens[i].score = h_PRU;
+			newGens[i].ascore = h_PRU;
+			if(parseInt(newGens[i].score) > 100){
+			    newGens[i].reportImage = {"min":0,"max":100,"score":parseInt(newGens[i].score)-50,"process":[{"color":"#80cac1","text":"较小","width":"30%"},{"color":"#e2ae5c","text":"一般","width":"40%"},{"color":"#db453d","text":"较大","width":"30%"}]};
+			}else{
+			    newGens[i].reportImage = {"min":0,"max":100,"score":newGens[i].score,"process":[{"color":"#80cac1","text":"较小","width":"30%"},{"color":"#e2ae5c","text":"一般","width":"40%"},{"color":"#db453d","text":"较大","width":"30%"}]};
+			}
+			if(newGens[i].score >= 0 && newGens[i].score <= 30){
+				fScore.F4 = {
+					glass:1,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score >= 30.01 && newGens[i].score <= 70){
+				fScore.F4 = {
+					glass:2,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score >= 70.01 && newGens[i].score <=100){
+				fScore.F4 = {
+					glass:3,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score>100){
+				fScore.F4 = {
+					glass:3,
+					score:100,
+					title:newGens[i].title
+				};
+			}
+		}
+		if(newGens[i].key == 'F5'){
+			newGens[i].score = h_PFT;
+			newGens[i].ascore = h_PFT;
+			newGens[i].reportImage = {"min":0,"max":100,"score":newGens[i].score,"process":[{"color":"#80cac1","text":"充沛","width":"30%"},{"color":"#e2ae5c","text":"一般","width":"40%"},{"color":"#db453d","text":"疲劳","width":"30%"}]};
+			if(newGens[i].score >= 0 && newGens[i].score <= 30){
+				fScore.F5 = {
+					glass:1,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score >= 30.01 && newGens[i].score <= 70){
+				fScore.F5 = {
+					glass:2,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score >= 70.01 && newGens[i].score <= 100){
+				fScore.F5 = {
+					glass:3,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}
+		}
+		if(newGens[i].key == 'F6'){
+			newGens[i].score = h_ANFS;
+			newGens[i].ascore = h_ANFS;
+			newGens[i].reportImage = {"min":0,"max":2,"score":newGens[i].score,"process":[{"color":"#e2ae5c","text":"交感神经兴奋","width":"30%"},{"color":"#80cac1","text":"平衡","width":"40%"},{"color":"#e2ae5c","text":"迷走神经兴奋","width":"30%"}]};
+			if(newGens[i].score >= 0 && newGens[i].score <= 0.6){
+				fScore.F6 = {
+					glass:1,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score >= 0.61 && newGens[i].score <= 1.49){
+				fScore.F6 = {
+					glass:2,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score >= 1.5){
+				fScore.F6 = {
+					glass:3,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}
+		}
+		if(newGens[i].key == 'F7'){
+			newGens[i].reportImage = {"min":1,"max":4,"score":newGens[i].score,"process":[{"color":"#80cac1","text":"平衡","width":"25%"},{"color":"#e2ae5c","text":"阴虚","width":"25%"},{"color":"#e66f62","text":"阳虚","width":"25%"},{"color":"#db453d","text":"阴虚+阳虚","width":"25%"}]};
+			if(newGens[i].score == 1){
+				fScore.F7 = {
+					glass:1,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score >= 2 && newGens[i].score <= 3){
+				fScore.F7 = {
+					glass:2,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}else if(newGens[i].score == 4){
+				fScore.F7 = {
+					glass:3,
+					score:newGens[i].score,
+					title:newGens[i].title
+				};
+			}
+		}
+	}
+
+	//统计级别出现的次数
+	for(var i in fScore){
+		arrays.push(fScore[i].glass);
+	}
+
+	arrays.forEach(function(item) {
+	  counts[item] = (counts[item] || 0) + 1;
+	});
+	//判断属于哪个级别1-10
+	 if(fScore['F6'].glass == 2 && fScore['F1'].glass == 3 && fScore['F2'].glass == 3&& fScore['F3'].glass == 3&& fScore['F4'].glass == 3&& fScore['F5'].glass == 3&& fScore['F7'].glass == 3){
+	 	classes = 1;
+	 }else if(counts['3'] >= 5 && counts['3'] <= 6){
+	 	classes = 2;
+	 }
+	 if(counts['3'] == 4){
+	 	classes = 3;
+	 }
+	 if(counts['3'] >= 2 && counts['3'] <= 3){
+	 	classes = 4;
+	 }
+	 if(counts['3'] == 1 || counts['2'] == 7){
+	 	classes = 5;
+	 }
+	 if(counts['2'] >= 5 && counts['2'] <= 6 && counts['3'] == undefined){
+	 	classes = 6;
+	 }
+	 if(counts['2'] == 4 && counts['3'] == undefined){
+	 	classes = 7;
+	 }
+	 if(fScore['F4'].glass == 2 || fScore['F5'].glass == 2 && fScore['F1'].glass == 1 && fScore['F2'].glass == 1 && fScore['F3'].glass == 1 && fScore['F6'].glass == 1 && fScore['F7'].glass == 1){
+	 	classes = 9;
+	 }else if(counts['2'] >= 1 && counts['2'] <= 3 && counts['3'] == undefined){
+	 	classes = 8;
+	 }
+	 if(counts['1'] == 7){
+	 	classes = 10;
+	 }
+
+	var data1 = JSON.parse(json.HrvData);
+	var data2 = JSON.parse(json.HrvDatas);
+	var data1before = [];
+	var data2after = [];
+	console.log(data1,data2);
+	for(var i in data1){
+		if(data1[i].key != "h_MES" && data1[i].key != "h_PRU" && data1[i].key != "h_ANFS"){
+			data1before.push((data1[i].score).toFixed(1));
+		}
+		if(data2[i].key != "h_MES" && data2[i].key != "h_PRU" && data2[i].key != "h_ANFS"){
+			data2after.push((data2[i].score).toFixed(1));
+		}
+	}
+	var reportImage = ['var data='+classes+';var colors=["#42ae36","#80ad38","#afba20","#d8d325","#e8a41c","#ea8018","#ef5e16","#ea3a11","#d31c1c","#b20909"];var config={pane:{startAngle:-140,endAngle:140,background:[{backgroundColor:"#fff",borderWidth:0,outerRadius:"100%",innerRadius:"88%"}]},title:{text:"自主神经心身平衡指数"},yAxis:{min:0,max:10,minorTickInterval:0,labels:{rotation:"auto",distance:10},plotBands:[{from:0,to:1,color:colors[9],innerRadius:"100%",outerRadius:"55%"},{from:1,to:2,color:colors[8],innerRadius:"100%",outerRadius:"55%"},{from:2,to:3,color:colors[7],innerRadius:"100%",outerRadius:"55%"},{from:3,to:4,color:colors[6],innerRadius:"100%",outerRadius:"55%"},{from:4,to:5,color:colors[5],innerRadius:"100%",outerRadius:"55%"},{from:5,to:6,color:colors[4],innerRadius:"100%",outerRadius:"55%"},{from:6,to:7,color:colors[3],innerRadius:"100%",outerRadius:"55%"},{from:7,to:8,color:colors[2],innerRadius:"100%",outerRadius:"55%"},{from:8,to:9,color:colors[1],innerRadius:"100%",outerRadius:"55%"},{from:9,to:10,color:colors[0],innerRadius:"100%",outerRadius:"55%"}],},plotOptions:{series:{dataLabels:{enabled:true}},gauge:{dataLabels:{enabled:true},dial:{radius:"80%",rearLength:"0%",backgroundColor:"silver",borderColor:"silver",borderWidth:1,baseWidth:10,topWidth:1,baseLength:"30%"}}},tooltip:{formatter:function(){return"级别:"+this.y}},series:[{data:[data]}]};image(["F1"],"gauge",config);',"var config={yAxis:{tickWidth:0,gridLineWidth: 0,tickInterval:10,max:120,min:6},xAxis:{categories:['疲劳指数','抗压能力','迷走神经','交感神经']},legend:{enabled:true},plotOptions :{column: { pointPadding: 0.2, borderWidth: 0,pointWidth: 15, dataLabels: { enabled: true} } },series:[{name:'干预前',barWidth:70,color:'#eba24b',data:["+data1before+"]},{name:'干预后',barWidth:70,color:'#80cac1',data:["+data2after+"]}]};image(['h_PFT','1','2','3','3','4','5'],'column',config)"];
+	var reportData={
+		genes: json.data,
+		user: json.user,
+		item: json.item,
+		testCenterName: json.testCenterName
+	};
+
+	//根据级别选择评语
+	switch (classes){
+		case 1:
+		case 2:
+			reportData.genes.content = classer.class1;
+			break;
+		case 3:
+		case 4:
+		case 5:
+			reportData.genes.content = classer.class2;
+			break;
+		case 6:
+		case 7:
+		case 8:
+			reportData.genes.content = classer.class3;
+			break;
+		case 9:
+		case 10:
+			reportData.genes.content = classer.class4;
+			break;
+		default:
+			break;
+	};
+
+
+	$("#report_tmpl").tmpl(reportData).appendTo(".print_all");
+
+	if(reportImage && reportImage.length > 0){
+		for(var i in reportImage){
+			var code = reportImage[i];
+			window.showImage(json.data.data, code, 'report_image_'+i);
+		}
+	}
+
+}
+</script>
+<script type="text/javascript">
+    var jsonStr = window.sendData.getData();
+    var jsonObj = JSON.parse(jsonStr);
+    jsonObj = JSON.parse(jsonObj.data);
+    if(parseInt(jsonObj.isboy) == 0){
+        jsonObj.isboy = "FEMALE";
+    }else{
+        jsonObj.isboy = "MALE";
+    }
+    jsonObj = {
+        HrvData:jsonObj.hrvdata1,
+        HrvDatas:jsonObj.hrvdata2,
+        user:{
+            age:jsonObj.age,
+            barcode:jsonObj._id,
+            id:jsonObj._id,
+            sex:jsonObj.isboy,
+            userName:jsonObj.name
+        },
+        data:{
+            data:JSON.parse(jsonObj.data),
+            title:jsonObj.title
+        }
+    }
+    callback(jsonObj);
+</script>
+</body>
+</html>

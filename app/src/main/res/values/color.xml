@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bkgcolor">#ffffff</color>
+    <color name="begincolor">#fffacd</color>
+    <color name="aboutcolor">#deb887</color>
+    <color name="contactcolor">#fffaf0</color>
+    <color name="xuebaicolor">#fffafa</color>
+    <color name="titleBarcolor">#F4F4F4</color>
+    <color name="blackcolor">#000000</color>
+    <color name="whitecolor">#fffff0</color>
+    <color name="lightgray">#90505050</color>
+    <color name="darkgray">#808080</color>
+    <color name="connectBTcolor">#f0ffff</color>
+    <color name="yellowcolor">#ffff00</color>
+    <color name="diswavebkcolor">#edefea</color>
+    <color name="blue">#0000ff</color>
+    <color name="hrv_result_bk">#afc7ba</color>
+    <color name="white">#ffffff</color>
+    <color name="tester">#bed1c7</color>
+</resources>

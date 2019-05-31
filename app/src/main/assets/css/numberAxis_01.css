@@ -1,0 +1,120 @@
+.test_item_line{ width:680px; height:60px; overflow:hidden;}
+.text_low{ width:5%; line-height:1.4; text-align:left; float:left; margin:26px 0 0 0;}
+.text_high{ width:5%; line-height:1.4; text-align:right; float:left; margin:26px 0 0 0;}
+
+.test_item_line .test_items{
+	width:500px;
+	height:14px;
+	float:left;
+	overflow:hidden;
+	margin:27px 0 0 8px;
+	background: none repeat scroll 0 0 #89D0E4;
+}
+
+.test_item_line .test_items a {
+    border: 0;
+    cursor: pointer;
+    display: block;
+    font-size: 14px;
+    height: 14px;
+    line-height: 14px;
+    padding: 0;
+    float:left;
+    margin-top:0;
+    text-align: center;
+}
+
+.test_item_line .test_items a.answer_selected {
+    color: white;
+}
+
+.test_item_line .test_items a:hover{
+	background:#1C9607;
+	color: white;
+}
+
+.number_axis_hover {
+	background: none repeat scroll 0 0 #1C9607;
+}
+
+
+.test_pro{
+	width:90%;
+	height:50px;
+	float:left;
+	overflow:hidden;
+	margin:0 0 0 0;
+}
+
+.page_left , .page_right{
+	display:none;	
+}
+
+.page_bar{
+	display: inline;
+	position: relative;
+	height: 50px;
+	width:100%;
+	float: left;
+}
+
+.scrollLine , .page_number{
+	position: relative;
+	display: block;
+	width:100%;
+	height: 28px;
+}
+.scrollLine {
+	margin:0 auto;
+	cursor: pointer;
+	background: -webkit-linear-gradient(left, #c1e7ff , #5591b7); /* Safari 5.1 - 6.0 */
+	background: -o-linear-gradient(right, #c1e7ff, #5591b7); /* Opera 11.1 - 12.0 */
+	background: -moz-linear-gradient(right, #c1e7ff, #5591b7); /* Firefox 3.6 - 15 */
+	background: linear-gradient(to right, #c1e7ff , #5591b7); /* 标准的语法 */
+	border-radius: 20px 20px; 
+	-moz-border-radius:20px 20px; 
+	-webkit-border-radius: 20px 20px; 
+	height:16px;
+}
+
+.scrollCompleted {
+	height: 100%;
+	background-color:#2aad00;
+	border-radius: 20px 20px; 
+	-moz-border-radius:20px 20px; 
+	-webkit-border-radius: 20px 20px; 
+	top: 0;
+	left: 0;
+	position: absolute;
+} 
+
+.scrollButton{
+	width:24px;
+	height:24px;
+	line-height:24px;
+	background:url(../images/numberaxis_bar.png) no-repeat center;
+	left:40%;
+	position: absolute;
+	margin-left: -10px;
+	top: -4px;
+	
+}
+
+.page_now_page, .page_hover_page {
+	left:30%;
+	position: absolute;
+	height: 16px;
+	line-height:16px;
+	margin-left: -10px;
+	padding:0 8px;
+	color:#fff;
+	top: 0;
+	background-color: #6dc0f4;
+	text-align:center;
+
+}
+.page_hover_page{
+	background-color: #CCCCCC;
+}
+.bar{ display:block; width:80px; height:24px; padding:0 0 0 12px; background:url(bar-left.png) no-repeat left center;}
+.bar span{ display:block; width:80px; height:24px; background:url(bar-right.png) no-repeat right center}

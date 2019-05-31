@@ -1,0 +1,227 @@
+<!DOCTYPE HTML>
+<html>
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>PEM心理健康管理系统</title>
+		<link href="css/cp_global.css" rel="stylesheet" type="text/css" />
+		<link rel="stylesheet" type="text/css" href="css/numberAxis_01.css">
+		<script src="js/jquery-1.4.2.min.js" type="text/javascript"></script>
+		<script src="js/sideUserSettingScroll.js" type="text/javascript"></script>
+		<script src="js/jquery.numberaxis.js" type="text/javascript"></script>
+		<script src="js/jquery.cookie.js" type="text/javascript"></script>
+		<script src="js/jquery.tmpl.min.js" type="text/javascript"></script>
+		<script src="js/json2.js" type="text/javascript"></script>
+		<script src="testing/js/comm.js" type="text/javascript"></script>
+		<script src="testing/js/zskxTest.js" type="text/javascript"></script>
+		<script src="testing/js/zskxTestUI.js"></script>
+		<script src="js/calc.js"></script>
+		<script type="text/javascript">
+			function showDuckBg() {
+				$('#duckbg').height($(document).height()).width($(document).width()).css('display', 'block');
+			};
+
+			function closeDuckBg() {
+				$('#duckbg').css('display', 'none');
+			};
+
+			function showEndTest() {
+				var number = parseInt($(".number_next").text());
+				var timer = setInterval(function() {
+					$(".number_next").text(--number);
+					if(number === 1) {
+						clearInterval(timer);
+						setTimeout(function() {
+							window.location.href = "${ctxPath}/app/menu.action";
+						}, 1000);
+					}
+				}, 1000);
+			}
+		</script>
+
+		<style type="text/css">
+			.main {
+				width: 100%;
+				height: 100%;
+				position: relative;
+				z-index: 999;
+			}
+			
+			.duckbg {
+				position: absolute;
+				z-index: 300;
+				top: 0;
+				background: none;
+			}
+			.guide_content{
+				border-radius: 5px;
+				min-height: 440px;
+			}
+			.new-test-guide{
+				display: none!important;
+			}
+			.head{
+				display:none
+			}
+		</style>
+
+	</head>
+
+	<body>
+		<div class="duckbg" id="duckbg" style="display: none;"></div>
+
+		<div class="main_panel">
+			<div class="main">
+				<div id="main"></div>
+			</div>
+		</div>
+		<!--mainpanel end-->
+
+		<script type="text/zskx-tmpl" id="guide-tmpl">
+			<div class="index_all">
+				<div class="index_content">
+					<!--head-->
+					<div class="first_title" style="display: none;">
+						<h1><span></span>测试指导语</h1>
+					</div>
+					<!--guide_title-->
+					<div id="target"></div>
+					<div class="guide_content">
+						<div class="guide_title">
+							<h2>${title}</h2>
+						</div>
+						<div class="exam_guide_text">{{html description}}</div>
+						<div class="pay_lead_title">
+							<h2>测试指导语</h2>
+							<p>{{html guide}}</p>
+						</div>
+
+						<div class="scale_btn">
+							<a href="javascript:void(0);" class="start_test" data-test='startQuestion'>开始测试</a>
+							<a href="javascript:void(0);" style="display:none;" class="continue_answer" data-test='continueQuestion'>继续测试</a>
+						</div>
+					</div>
+					<!--guide_content-->
+				</div>
+				<!--index_content-->
+			</div>
+			<!--index_all-->
+		</script>
+		<script type="text/zskx-tmpl" id="test-tmpl">
+			<div class="index_all">
+				<div class="index_content">
+					<!--head-->
+					<div class="first_title" style="display: none;">
+						<h1><span></span></h1>
+					</div>
+					<!--guide_title-->
+					<div class="guide_content">
+						<div class="guide_title">
+							<h2>${title}</h2>
+						</div>
+
+						<div class="progress_all">
+							<p class="progress_word">进度</p>
+							<p class="progress_bar">
+								<span class="progress_bar_now" data-test="progressNow"></span>
+							</p>
+							<!--<p class="progress_number" data-test="progressPercent">1 / ${count }</p>-->
+							<p class="progress_number"><span class="progress_number" data-test="progressPercent"></span><span class="progress_number_all"></span></p>
+							<div class="clr"></div>
+						</div>
+						<div class="question_list" data-test="test_panel" style="min-height: 200px">
+						</div>
+						<!--scale_question-->
+						<div class="warring" style="color: red;display: none;">
+							请选择答案
+						</div>
+						<div class="next_btn">
+							<a id="upButton" class="start_test" data-test="btnUp">上一题</a>
+							<a id="downButton" class="start_test" data-test="btnDown">下一题</a>
+						</div>
+					</div>
+					<!--guide_content-->
+				</div>
+				<!--index_content-->
+			</div>
+			<!--index_all-->
+		</script>
+		<!-- 单选 多选 -->
+		<script type="text/zskx-tmpl" id="single-tmpl">
+			<p class="new-test-guide" style="display: none;font-size: 18px;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;"></p>
+			<h3 class="question_title">${number}、{{html title}} </h3> 
+			{{each choiceGroup}} ${$.set('group', $index) } {{if $value.title}}
+			<lable>${$value.title}</lable>
+			{{/if}} {{each choices}}
+			<a value='${$index}' group="${$.get('group')}" data-choice="SINGLE" data-autoFillAnswer="${autoFillAnswer_key == $index && autoFillAnswer_value}" data-question-index='${number}'>${$index}、${title} </span>
+			</a>
+			{{/each}} {{/each}}
+		</script>
+
+		<script type="text/javascript">
+			var nowUser = {};
+			function callback(json) {
+				if(json.code != 0) {
+					alert(json.msg);
+					return;
+				}
+				if(json.id == 12001){
+					window.fun.respData("Y");
+					return;
+				}
+				var string2Json = function(str) {
+					return eval('(' + str + ')');
+				};
+				var customer = {
+					"age": json.age,
+					"gender": json.sex,
+					"edu": json.educationType
+				}
+				
+				
+				$(function(){
+					var ss = [{"code":0,"data":{"description":"自主神经心身平衡指数评估量表根据3D医学核心理论编制而成，从心理学、中医学、临床医学三个纬度对人体自主神经功能进行综合评估分析，实现人体健康状况分级与预警，能够起到对心身性疾病进行识别与提前预防治疗的作用。","guide":"测试共有三部分，在开始每部分测试前请仔细阅读该部分的指导语，并按照指导语要求回答问题。为了准确评估您的自主神经功能状态，请您务必如实回答。\n\t\t\t\t\t","id":11011,"question":{"commChoices":{"1":{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"完全没有"}}},{"choices":{"B":{"title":"有几天"}}},{"choices":{"C":{"title":"超过一半日子"}}},{"choices":{"D":{"title":"几乎每天"}}}],"type":"SINGLE"},"2":{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"没有（根本不/从来没有）"}}},{"choices":{"B":{"title":"很少（有一点/偶尔）"}}},{"choices":{"C":{"title":"有时（有些/少数时间）"}}},{"choices":{"D":{"title":"经常（相当/多数时间）"}}},{"choices":{"E":{"title":"总是（非常/每天）"}}}],"type":"SINGLE"}},"questions":[{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"第一部分","title":"<p>指导语：请结合您<strong>最近两周内</strong>的状况，作出相应程度的选择。</p>1、感觉紧张、焦急或者急切。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"2","title":"不能够停止或者控制担忧。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"3","title":"对各种各样的事情担忧过多。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"4","title":"很难放松下来。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"5","title":"由于不安而无法静坐。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"6","title":"变的容易烦躁或急躁。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"7","title":"感到似乎将有可怕的事情发生而害怕。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"8","title":"做事提不起劲或没有兴趣。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"9","title":"感到心情低落、沮丧或绝望。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"10","title":"入睡困难、很难熟睡或睡眠太多。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"11","title":"感觉疲劳或无精打采。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"12","title":"胃口不好或吃得太多。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"13","title":"觉得自己很糟、或觉得自己很失败让自己或家人失望。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"14","title":"很难集中精神做事，例如阅读报纸或看电视。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"15","title":"动作或说话速度缓慢，甚至让身边人都觉察到；或正好相反——烦躁、坐立不安、动来动去的情况远比过去多。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"16","title":"有不如死掉或用某种方式伤害自己的念头。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"≤6小时"}}},{"choices":{"B":{"title":"6-7小时 "}}},{"choices":{"C":{"title":"7-8小时"}}},{"choices":{"D":{"title":"＞8小时"}}}],"number":"第二部分","title":"<p>指导语：请根据您<strong>最近一个月</strong>的睡眠状况，选择最符合您实际情况的选项。</p>17、近1个月，在床上的时间（从上床到起床）为几小时？","type":"SINGLE"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"≤15分"}}},{"choices":{"B":{"title":"16-30分"}}},{"choices":{"C":{"title":"31-60分"}}},{"choices":{"D":{"title":"＞60分"}}}],"number":"18","title":"近1个月，从上床到入睡通常需要多少分钟？","type":"SINGLE"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"≤5小时"}}},{"choices":{"B":{"title":"5-6小时"}}},{"choices":{"C":{"title":"6-7小时"}}},{"choices":{"D":{"title":"＞7小时"}}}],"number":"19","title":"近1个月，每夜通常实际睡眠为几小时（不等于卧床时间）？","type":"SINGLE"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"无"}}},{"choices":{"B":{"title":"<1次／周"}}},{"choices":{"C":{"title":"1-2次／周"}}},{"choices":{"D":{"title":"≥3次／周"}}}],"number":"20","title":"近1个月，因入睡困难影响睡眠而烦恼（30分钟内不能人睡）？","type":"SINGLE"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"很好"}}},{"choices":{"B":{"title":"较好"}}},{"choices":{"C":{"title":"较差"}}},{"choices":{"D":{"title":"很差"}}}],"number":"21","title":"近1个月，总的来说，您认为自己的睡眠质量？","type":"SINGLE"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"第三部分","title":"<p>指导语：请根据您<strong>最近一年</strong>的身体状况，选择最符合您实际情况的选项。</p>22、您眼睛干涩吗？"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"23","title":"您手脚发凉吗?（不包含因周围温度低或穿的少导致的手脚发冷）"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"24","title":"您胃脘部、背部或腰膝部怕冷吗？（指上腹部、背部、腰部或膝关节等，有一处或多处怕冷）"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"25","title":"您比一般人耐受不了寒冷吗？（指比别人容易害怕冬天或是夏天的冷空调、电扇等）"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"26","title":"您皮肤或口唇干吗？"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"27","title":"您感到口干咽燥、总想喝水吗？"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"28","title":"您吃（喝）凉的东西会感到不舒服或者怕吃（喝）凉的东西吗？（指不喜欢吃凉的食物，或吃了凉的食物后会不舒服）"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"29","title":"您容易大便干燥吗？"}]},"title":"自主神经心身平衡指数评估量表","version":0.003},"itemId":2200,"msg":"Success","nowUser":{"age":33,"barcode":"33331111","canModify":"N","cardId":"1028900408889","completed":"N","createAt":"2019-05-17 13:48:24","groupUser":false,"id":691,"interposeDay":1,"interver":"Y","itemCount":1,"loginName":"dfayx","marriage":"MARRIED","phoneNumber":"","reportGenerateType":"INSTANT","sex":"MALE","status":"SERVING","testCenterId":37,"userName":"盖伦啊"}}];
+					var count = [{"code":0,"data":{"description":"自主神经心身平衡指数评估量表根据3D医学核心理论编制而成，从心理学、中医学、临床医学三个纬度对人体自主神经功能进行综合评估分析，实现人体健康状况分级与预警，能够起到对心身性疾病进行识别与提前预防治疗的作用。","guide":"测试共有三部分，在开始每部分测试前请仔细阅读该部分的指导语，并按照指导语要求回答问题。为了准确评估您的自主神经功能状态，请您务必如实回答。\n\t\t\t\t\t","id":11011,"question":{"commChoices":{"1":{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"完全没有"}}},{"choices":{"B":{"title":"有几天"}}},{"choices":{"C":{"title":"超过一半日子"}}},{"choices":{"D":{"title":"几乎每天"}}}],"type":"SINGLE"},"2":{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"没有（根本不/从来没有）"}}},{"choices":{"B":{"title":"很少（有一点/偶尔）"}}},{"choices":{"C":{"title":"有时（有些/少数时间）"}}},{"choices":{"D":{"title":"经常（相当/多数时间）"}}},{"choices":{"E":{"title":"总是（非常/每天）"}}}],"type":"SINGLE"}},"questions":[{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"第一部分","title":"<p>指导语：请结合您<strong>最近两周内</strong>的状况，作出相应程度的选择。</p>1、感觉紧张、焦急或者急切。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"2","title":"不能够停止或者控制担忧。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"3","title":"对各种各样的事情担忧过多。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"4","title":"很难放松下来。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"5","title":"由于不安而无法静坐。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"6","title":"变的容易烦躁或急躁。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"7","title":"感到似乎将有可怕的事情发生而害怕。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"8","title":"做事提不起劲或没有兴趣。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"9","title":"感到心情低落、沮丧或绝望。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"10","title":"入睡困难、很难熟睡或睡眠太多。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"11","title":"感觉疲劳或无精打采。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"12","title":"胃口不好或吃得太多。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"13","title":"觉得自己很糟、或觉得自己很失败让自己或家人失望。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"14","title":"很难集中精神做事，例如阅读报纸或看电视。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"15","title":"动作或说话速度缓慢，甚至让身边人都觉察到；或正好相反——烦躁、坐立不安、动来动去的情况远比过去多。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"1","number":"16","title":"有不如死掉或用某种方式伤害自己的念头。"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"≤6小时"}}},{"choices":{"B":{"title":"6-7小时 "}}},{"choices":{"C":{"title":"7-8小时"}}},{"choices":{"D":{"title":"＞8小时"}}}],"number":"第二部分","title":"<p>指导语：请根据您<strong>最近一个月</strong>的睡眠状况，选择最符合您实际情况的选项。</p>17、近1个月，在床上的时间（从上床到起床）为几小时？","type":"SINGLE"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"≤15分"}}},{"choices":{"B":{"title":"16-30分"}}},{"choices":{"C":{"title":"31-60分"}}},{"choices":{"D":{"title":"＞60分"}}}],"number":"18","title":"近1个月，从上床到入睡通常需要多少分钟？","type":"SINGLE"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"≤5小时"}}},{"choices":{"B":{"title":"5-6小时"}}},{"choices":{"C":{"title":"6-7小时"}}},{"choices":{"D":{"title":"＞7小时"}}}],"number":"19","title":"近1个月，每夜通常实际睡眠为几小时（不等于卧床时间）？","type":"SINGLE"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"无"}}},{"choices":{"B":{"title":"<1次／周"}}},{"choices":{"C":{"title":"1-2次／周"}}},{"choices":{"D":{"title":"≥3次／周"}}}],"number":"20","title":"近1个月，因入睡困难影响睡眠而烦恼（30分钟内不能人睡）？","type":"SINGLE"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","choiceGroup":[{"choices":{"A":{"title":"很好"}}},{"choices":{"B":{"title":"较好"}}},{"choices":{"C":{"title":"较差"}}},{"choices":{"D":{"title":"很差"}}}],"number":"21","title":"近1个月，总的来说，您认为自己的睡眠质量？","type":"SINGLE"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"第三部分","title":"<p>指导语：请根据您<strong>最近一年</strong>的身体状况，选择最符合您实际情况的选项。</p>22、您眼睛干涩吗？"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"23","title":"您手脚发凉吗?（不包含因周围温度低或穿的少导致的手脚发冷）"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"24","title":"您胃脘部、背部或腰膝部怕冷吗？（指上腹部、背部、腰部或膝关节等，有一处或多处怕冷）"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"25","title":"您比一般人耐受不了寒冷吗？（指比别人容易害怕冬天或是夏天的冷空调、电扇等）"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"26","title":"您皮肤或口唇干吗？"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"27","title":"您感到口干咽燥、总想喝水吗？"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"28","title":"您吃（喝）凉的东西会感到不舒服或者怕吃（喝）凉的东西吗？（指不喜欢吃凉的食物，或吃了凉的食物后会不舒服）"},{"afterScript":"","autoFillAnswer":"","beforeScript":"","changeAnswer":"","commChoice":"2","number":"29","title":"您容易大便干燥吗？"}]},"title":"自主神经心身平衡指数评估量表","version":0.003},"itemId":2200,"msg":"Success","nowUser":{"age":33,"barcode":"33331111","canModify":"N","cardId":"1028900408889","completed":"N","createAt":"2019-05-17 13:48:24","groupUser":false,"id":691,"interposeDay":1,"interver":"Y","itemCount":1,"loginName":"dfayx","marriage":"MARRIED","phoneNumber":"","reportGenerateType":"INSTANT","sex":"MALE","status":"SERVING","testCenterId":37,"userName":"盖伦啊"}}];
+					var warn = undefined;
+					var allNum = 0;
+					var alrCount = 0;
+					var xsCount = 0;
+					for(var i in count) {
+						allNum += count[i].data.question.questions.length;
+					}
+					for(var i in ss) {
+						alrCount += ss[i].data.question.questions.length;
+					}
+					xsCount = allNum-alrCount;
+					
+					$('#main').zskxTestUI({
+						allquestion:allNum,
+						xsquestion:xsCount,
+						question: json,
+						itemId: json.itemId,
+						customer: customer,
+						onBeginTest: function() {
+							showDuckBg();
+							
+						},
+						onCloseTest: function() {
+							closeDuckBg();
+						},
+						onNext: function(i, total) {
+							
+						},
+						onSubmit: function(qInfo, end, del) {
+							var qs = calcQuestionScore(json.calc, JSON.parse(qInfo.answer), customer);
+							var gs = calcGeneScore(json.gene, qs, customer,JSON.parse(qInfo.answer));
+							json = getAppraise(json.gene, gs, warn,customer,qInfo.answer);
+							window.fun.sendData(JSON.stringify(json),qInfo.answer,JSON.stringify(gs),"Y");
+							window.localStorage.removeItem("null_test_answer");
+						}
+					});
+				})
+			};
+			callback({"code":0,"msg":"success","id":11011,"guide":"测试共有三部分，在开始每部分测试前请仔细阅读该部分的指导语，并按照指导语要求回答问题。为了准确评估您的自主神经功能状态，请您务必如实回答。\n\t\t\t\t\t","gene":[{"key":"F1","appraise":[{"minScore":0,"maxScore":4,"content":"无","suggestion":""},{"minScore":5,"maxScore":9,"content":"轻","suggestion":""},{"minScore":10,"maxScore":14,"content":"中","suggestion":""},{"minScore":15,"maxScore":21,"content":"重","suggestion":""}],"calcScript":"sum();","calcScript2":"","questions":"0,1,2,3,4,5,6","title":"焦虑状态","viewAppraise":false,"viewScore":true},{"key":"F1_1","title":"焦虑状态","calcScript":"sum();","questions":"0,1,2,3,4,5,6","viewScore":false,"viewAppraise":false,"appraise":[{"minScore":0,"maxScore":4,"content":"水平1","suggestion":""},{"minScore":5,"maxScore":9,"content":"水平2","suggestion":""},{"minScore":10,"maxScore":21,"content":"水平3","suggestion":""}]},{"key":"F2","title":"抑郁状态","viewScore":true,"viewAppraise":false,"appraise":[{"minScore":0,"maxScore":4,"content":"无","suggestion":""},{"minScore":5,"maxScore":9,"content":"轻","suggestion":""},{"minScore":10,"maxScore":14,"content":"中","suggestion":""},{"minScore":15,"maxScore":27,"content":"重","suggestion":""}],"questions":"7,8,9,10,11,12,13,14,15","calcScript":"sum();"},{"key":"F2_1","title":"抑郁状态","calcScript":"sum();","questions":"7,8,9,10,11,12,13,14,15","viewScore":false,"viewAppraise":false,"appraise":[{"minScore":0,"maxScore":4,"content":"水平1","suggestion":""},{"minScore":5,"maxScore":9,"content":"水平2","suggestion":""},{"minScore":10,"maxScore":27,"content":"水平3","suggestion":""}]},{"key":"F3","title":"睡眠状态","viewScore":true,"viewAppraise":false,"appraise":[{"minScore":0,"maxScore":2,"content":"较好","suggestion":""},{"minScore":3,"maxScore":4,"content":"一般","suggestion":""},{"minScore":5,"maxScore":8,"content":"较差","suggestion":""},{"minScore":9,"maxScore":12,"content":"很差","suggestion":""}],"calcScript":"var n=checked[17]+checked[19];\nvar score2 = [0, 1, 3, 5, 6.1];\nvar transScore = [0, 1, 2, 3];\nvar s2=0;\n\nfor (var i = 1; i<score2.length; i++){\n    var min = score2[i-1];\n    var max = score2[i];\n    if (n>=min && n<max){\n    s2 = transScore[i-1];\n    }\n}\n\nvar s4 = 0;\nvar n1 = checked[16];\nvar n2 = checked[18];\n\t\nif (n2 == 3) {\n    if (n1 == 3) {\n\ts4 = 3;\n\t} else if (n1== 2) {\n\ts4 = 2;\n\t} else if (n1==1 || n1==0) {\n\ts4 = 1;\n\t}\n\n} else if (n2 == 2) {\n    if (n1 == 3) {\n\ts4 = 2;\n\t} else if (n1 == 2) {\n\ts4 = 1;\n\t}else if (n1 == 1 || n1==0) {\n\ts4 = 0;\n\t}\n\n} else if (n2 == 1) {\n    if (n1 == 3) {\n\ts4 = 1;\n\t}else if (n1 == 2 || n1==1 || n1==0) {\n\ts4 = 0;\n\t}\n\n} else if (n2 == 0) {\n\ts4 = 0;\n}\n\nvar s=checked[20]+s2+checked[18]+s4;\nreturn s;\n","questions":"16,17,18,19,20"},{"key":"F3_1","title":"睡眠状态","calcScript":"var n=checked[17]+checked[19];\nvar score2 = [0, 1, 3, 5, 6.1];\nvar transScore = [0, 1, 2, 3];\nvar s2=0;\n\nfor (var i = 1; i<score2.length; i++){\n    var min = score2[i-1];\n    var max = score2[i];\n    if (n>=min && n<max){\n    s2 = transScore[i-1];\n    }\n}\n\nvar s4 = 0;\nvar n1 = checked[16];\nvar n2 = checked[18];\n\t\nif (n2 == 3) {\n    if (n1 == 3) {\n\ts4 = 3;\n\t} else if (n1== 2) {\n\ts4 = 2;\n\t} else if (n1==1 || n1==0) {\n\ts4 = 1;\n\t}\n\n} else if (n2 == 2) {\n    if (n1 == 3) {\n\ts4 = 2;\n\t} else if (n1 == 2) {\n\ts4 = 1;\n\t}else if (n1 == 1 || n1==0) {\n\ts4 = 0;\n\t}\n\n} else if (n2 == 1) {\n    if (n1 == 3) {\n\ts4 = 1;\n\t}else if (n1 == 2 || n1==1 || n1==0) {\n\ts4 = 0;\n\t}\n\n} else if (n2 == 0) {\n\ts4 = 0;\n}\n\nvar s=checked[20]+s2+checked[18]+s4;\nreturn s;\n","questions":"16,17,18,19,20","viewScore":false,"viewAppraise":false,"appraise":[{"minScore":0,"maxScore":2,"content":"水平1","suggestion":""},{"minScore":3,"maxScore":4,"content":"水平2","suggestion":""},{"minScore":5,"maxScore":12,"content":"水平3","suggestion":""}]},{"key":"F7","title":"体质状态","viewScore":true,"viewAppraise":false,"appraise":[{"minScore":1,"maxScore":1,"content":"平衡","suggestion":""},{"minScore":2,"maxScore":2,"content":"阴虚","suggestion":""},{"minScore":3,"maxScore":3,"content":"阳虚","suggestion":""},{"minScore":4,"maxScore":4,"content":"阴虚+阳虚","suggestion":""}],"questions":"21,22,23,24,25,26,27,28","calcScript":"var s1=checked[21]+checked[25]+checked[26]+checked[28];\nvar s2=checked[22]+checked[23]+checked[24]+checked[27];\nif(s1<11 && s2<11) {\n  return 1;\n}\nif(s1>=11 && s2<11) {\n  return 2;\n}\nif(s1<11 && s2>=11) {\n  return 3;\n}\nif(s1>=11 && s2>=11) {\n  return 4;\n}"},{"key":"F7_1","title":"体质状态","calcScript":"var s1=checked[21]+checked[25]+checked[26]+checked[28];\nvar s2=checked[22]+checked[23]+checked[24]+checked[27];\nif(s1<11 && s2<11) {\n  return 1;\n}\nif(s1>=11 && s2<11) {\n  return 2;\n}\nif(s1<11 && s2>=11) {\n  return 3;\n}\nif(s1>=11 && s2>=11) {\n  return 4;\n}","questions":"21,22,23,24,25,26,27,28","viewScore":false,"viewAppraise":false,"appraise":[{"minScore":1,"maxScore":1,"content":"水平1","suggestion":""},{"minScore":2,"maxScore":3,"content":"水平2","suggestion":""},{"minScore":4,"maxScore":4,"content":"水平3","suggestion":""}]},{"key":"F4","title":"压力状态","viewScore":true,"viewAppraise":true,"appraise":[]},{"key":"F5","title":"疲劳状态","viewScore":true,"viewAppraise":true,"appraise":[]},{"key":"F6","title":"ANS平衡状态","viewScore":true,"viewAppraise":true,"appraise":[]}],"modify_source":0.002,"create_at":"2019-04-02 11:43:18","calc":{"commChoices":{"1":{"beforeScript":"","choices":{"A":"0","B":"1","C":"2","D":"3"},"type":"SINGLE","calcScript":"","autoFillAnswer":""},"2":{"beforeScript":"","choices":{"A":"1","B":"2","C":"3","D":"4","E":"5"},"type":"SINGLE","calcScript":"","autoFillAnswer":""}},"question":[{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","commChoice":"1"},{"beforeScript":"","choices":{"A":"0","B":"1","C":"2","D":"3"},"type":"SINGLE","calcScript":"","autoFillAnswer":""},{"beforeScript":"","choices":{"A":"0","B":"1","C":"2","D":"3"},"type":"SINGLE","calcScript":"","autoFillAnswer":""},{"beforeScript":"","choices":{"A":"3","B":"2","C":"1","D":"0"},"type":"SINGLE","calcScript":"","autoFillAnswer":""},{"beforeScript":"","choices":{"A":"0","B":"1","C":"2","D":"3"},"type":"SINGLE","calcScript":"","autoFillAnswer":""},{"beforeScript":"","choices":{"A":"0","B":"1","C":"2","D":"3"},"type":"SINGLE","calcScript":"","autoFillAnswer":""},{"beforeScript":"","commChoice":"2"},{"beforeScript":"","commChoice":"2"},{"beforeScript":"","commChoice":"2"},{"beforeScript":"","commChoice":"2"},{"beforeScript":"","commChoice":"2"},{"beforeScript":"","commChoice":"2"},{"beforeScript":"","commChoice":"2"},{"beforeScript":"","commChoice":"2"}]},"modify_reason":"20190402(显示分数)","version":0.003,"title":"自主神经心身平衡指数评估量表","question_kind_id":27,"description":"自主神经心身平衡指数评估量表根据3D医学核心理论编制而成，从心理学、中医学、临床医学三个纬度对人体自主神经功能进行综合评估分析，实现人体健康状况分级与预警，能够起到对心身性疾病进行识别与提前预防治疗的作用。","removed":"N","question":{"questions":[{"title":"<p>指导语：请结合您<strong>最近两周内</strong>的状况，作出相应程度的选择。</p>1、感觉紧张、焦急或者急切。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"第一部分","commChoice":"1"},{"title":"不能够停止或者控制担忧。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"2","commChoice":"1"},{"title":"对各种各样的事情担忧过多。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"3","commChoice":"1"},{"title":"很难放松下来。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"4","commChoice":"1"},{"title":"由于不安而无法静坐。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"5","commChoice":"1"},{"title":"变的容易烦躁或急躁。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"6","commChoice":"1"},{"title":"感到似乎将有可怕的事情发生而害怕。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"7","commChoice":"1"},{"title":"做事提不起劲或没有兴趣。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"8","commChoice":"1"},{"title":"感到心情低落、沮丧或绝望。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"9","commChoice":"1"},{"title":"入睡困难、很难熟睡或睡眠太多。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"10","commChoice":"1"},{"title":"感觉疲劳或无精打采。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"11","commChoice":"1"},{"title":"胃口不好或吃得太多。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"12","commChoice":"1"},{"title":"觉得自己很糟、或觉得自己很失败让自己或家人失望。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"13","commChoice":"1"},{"title":"很难集中精神做事，例如阅读报纸或看电视。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"14","commChoice":"1"},{"title":"动作或说话速度缓慢，甚至让身边人都觉察到；或正好相反——烦躁、坐立不安、动来动去的情况远比过去多。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"15","commChoice":"1"},{"title":"有不如死掉或用某种方式伤害自己的念头。","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"16","commChoice":"1"},{"title":"<p>指导语：请根据您<strong>最近一个月</strong>的睡眠状况，选择最符合您实际情况的选项。</p>17、近1个月，在床上的时间（从上床到起床）为几小时？","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"第二部分","type":"SINGLE","choiceGroup":[{"choices":{"A":{"title":"≤6小时"}}},{"choices":{"B":{"title":"6-7小时 "}}},{"choices":{"C":{"title":"7-8小时"}}},{"choices":{"D":{"title":"＞8小时"}}}]},{"title":"近1个月，从上床到入睡通常需要多少分钟？","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"18","type":"SINGLE","choiceGroup":[{"choices":{"A":{"title":"≤15分"}}},{"choices":{"B":{"title":"16-30分"}}},{"choices":{"C":{"title":"31-60分"}}},{"choices":{"D":{"title":"＞60分"}}}]},{"title":"近1个月，每夜通常实际睡眠为几小时（不等于卧床时间）？","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"19","type":"SINGLE","choiceGroup":[{"choices":{"A":{"title":"≤5小时"}}},{"choices":{"B":{"title":"5-6小时"}}},{"choices":{"C":{"title":"6-7小时"}}},{"choices":{"D":{"title":"＞7小时"}}}]},{"title":"近1个月，因入睡困难影响睡眠而烦恼（30分钟内不能人睡）？","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"20","type":"SINGLE","choiceGroup":[{"choices":{"A":{"title":"无"}}},{"choices":{"B":{"title":"<1次／周"}}},{"choices":{"C":{"title":"1-2次／周"}}},{"choices":{"D":{"title":"≥3次／周"}}}]},{"title":"近1个月，总的来说，您认为自己的睡眠质量？","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"21","type":"SINGLE","choiceGroup":[{"choices":{"A":{"title":"很好"}}},{"choices":{"B":{"title":"较好"}}},{"choices":{"C":{"title":"较差"}}},{"choices":{"D":{"title":"很差"}}}]},{"title":"<p>指导语：请根据您<strong>最近一年</strong>的身体状况，选择最符合您实际情况的选项。</p>22、您眼睛干涩吗？","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"第三部分","commChoice":"2"},{"title":"您手脚发凉吗?（不包含因周围温度低或穿的少导致的手脚发冷）","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"23","commChoice":"2"},{"title":"您胃脘部、背部或腰膝部怕冷吗？（指上腹部、背部、腰部或膝关节等，有一处或多处怕冷）","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"24","commChoice":"2"},{"title":"您比一般人耐受不了寒冷吗？（指比别人容易害怕冬天或是夏天的冷空调、电扇等）","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"25","commChoice":"2"},{"title":"您皮肤或口唇干吗？","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"26","commChoice":"2"},{"title":"您感到口干咽燥、总想喝水吗？","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"27","commChoice":"2"},{"title":"您吃（喝）凉的东西会感到不舒服或者怕吃（喝）凉的东西吗？（指不喜欢吃凉的食物，或吃了凉的食物后会不舒服）","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"28","commChoice":"2"},{"title":"您容易大便干燥吗？","beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","number":"29","commChoice":"2"}],"commChoices":{"1":{"beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","type":"SINGLE","choiceGroup":[{"choices":{"A":{"title":"完全没有"}}},{"choices":{"B":{"title":"有几天"}}},{"choices":{"C":{"title":"超过一半日子"}}},{"choices":{"D":{"title":"几乎每天"}}}]},"2":{"beforeScript":"","changeAnswer":"","autoFillAnswer":"","afterScript":"","type":"SINGLE","choiceGroup":[{"choices":{"A":{"title":"没有（根本不/从来没有）"}}},{"choices":{"B":{"title":"很少（有一点/偶尔）"}}},{"choices":{"C":{"title":"有时（有些/少数时间）"}}},{"choices":{"D":{"title":"经常（相当/多数时间）"}}},{"choices":{"E":{"title":"总是（非常/每天）"}}}]}}},"q_index":0,"warning":"N","projectMap":{"场景":[{"id":6,"project_name":"临床系统"},{"id":7,"project_name":"体检中心"},{"id":8,"project_name":"儿科"},{"id":9,"project_name":"精神卫生专科医院"},{"id":10,"project_name":"维语"},{"id":12,"project_name":"企事业"}],"版本":[{"id":1,"project_name":"网络版"},{"id":2,"project_name":"局域网"},{"id":3,"project_name":"华西"},{"id":5,"project_name":"答题器"},{"id":11,"project_name":"儿童系统"}]},"report_image":["var data=json.appraise[0].score;\nvar colors = ['#42ae36','#80ad38','#afba20','#d8d325','#e8a41c','#ea8018','#ef5e16','#ea3a11','#d31c1c','#b20909'];\nvar config={\n        pane : {\n        startAngle: -140,\n        endAngle: 140,\n            background: [{\n                backgroundColor: '#fff',\n                borderWidth: 0,\n                outerRadius: '100%',\n                innerRadius: '88%'\n            }]\n        },  \n        title:{\n            text:'自主神经心身平衡指数'\n        }, \n        yAxis : {\n           min: 0,\n           max: 10,\n           minorTickInterval: 0,\n           labels: {\n            rotation: 'auto',\n            distance: 0\n           },\n        plotBands: [{//分区段\n            from: 0,\n            to: 1,\n            color: colors[0],\n            innerRadius: '100%',\n            outerRadius: '55%'\n        },\n        {\n            from: 1,\n            to: 2,\n            color: colors[1],\n            innerRadius: '100%',\n            outerRadius: '55%'\n        },{\n            from: 2,\n            to: 3,\n            color: colors[2],\n            innerRadius: '100%',\n            outerRadius: '55%'\n        },{\n            from: 3,\n            to: 4,\n            color: colors[3],\n            innerRadius: '100%',\n            outerRadius: '55%'\n        },{\n            from: 4,\n            to: 5,\n            color: colors[4],\n            innerRadius: '100%',\n            outerRadius: '55%'\n        },{\n            from:5,\n            to: 6,\n            color: colors[5],\n            innerRadius: '100%',\n            outerRadius: '55%'\n        },{\n            from:6,\n            to: 7,\n            color: colors[6],\n            innerRadius: '100%',\n            outerRadius: '55%'\n        },{\n            from:7,\n            to: 8,\n            color: colors[7],\n            innerRadius: '100%',\n            outerRadius: '55%'\n        },{\n            from:8,\n            to: 9,\n            color: colors[8],\n            innerRadius: '100%',\n            outerRadius: '55%'\n        },{\n            from:9,\n            to: 10,\n            color: colors[9],\n            innerRadius: '100%',\n            outerRadius: '55%'\n        }],\n        },\n        plotOptions: {\n            series: {\n                dataLabels: {\n                    enabled: true\n                }\n            },\n            gauge: {\n                dataLabels: {\n                    enabled:true\n                },\n                dial: {//仪表盘指针\n                    radius: '80%',\n                    rearLength: '0%',\n                    backgroundColor: 'silver',\n                    borderColor: 'silver',\n                    borderWidth: 1,\n                    baseWidth: 10,\n                    topWidth: 1,\n                    baseLength: '30%'\n                }\n            }\n        },\n        tooltip :{\n            formatter: function() {\n                return '级别:'+this.y;\n            }\n        },\n        series: [{\n            data: [data]\n        }]\n  };\n  image(['F1'],'gauge', config);"]});
+		</script>
+	</body>
+
+</html>

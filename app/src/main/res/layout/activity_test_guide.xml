@@ -1,0 +1,29 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:keepScreenOn="true"
+    android:background="@drawable/bg1"
+    android:layout_weight="7"
+    >
+    <LinearLayout
+    android:layout_width="fill_parent"
+    android:layout_height="0dp"
+    android:orientation="vertical"
+    android:layout_weight="2"
+    android:layout_marginTop="200dp"
+    android:gravity="center"
+
+    >
+</LinearLayout>
+    <Button
+        android:id="@+id/comein"
+        android:layout_width="200dp"
+        android:layout_height="45dp"
+        android:text="@string/okin"
+        android:layout_gravity="center"
+        android:background="#39791e"
+        android:textColor="#ffffff"
+        android:layout_marginBottom="40dp"/>
+</LinearLayout>
